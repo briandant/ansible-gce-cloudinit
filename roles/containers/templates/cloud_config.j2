@@ -1,0 +1,45 @@
+#cloud-config
+
+users:
+- name: {{ gcp_deploy_user }}
+  uid: {{ gcp_deploy_userid }}
+{# #### Authentication #### #}
+    {# We configure the docker-credential-helper to find the service account key (with `config --token-source="env"`), #}
+    {# then we configure docker-credential-gcr to work with requests made to our registry. #}
+    {# With those two items in place, any attempt to pull from our registry will use the service account, #}
+    {# which we configure with a JSON key in ansible_vars/vault-production.yml#gcp_deployuser_serviceaccount_key. #} 
+    {# On all this, see : https://cloud.google.com/container-optimized-os/docs/how-to/run-container-instance#accessing_private_images_in_or #} 
+    {# and see: https://github.com/GoogleCloudPlatform/docker-credential-gcr#gcr-credentials #}
+
+{# - path: "{{ gcp_deploy_service_account_file }} #}
+{#  permissions: 0644 #}
+{#  owner: {{ gcp_deploy_user }} #}
+{# permissions: '0644' #}
+{# content: "{{ lookup('file', gcp_deploy_service_account_file) | to_json }}" #}
+{# Environment="GOOGLE_APPLICATION_CREDENTIALS={{ gcp_deploy_service_account_file }}" #}
+
+write_files:
+{% for image in containers_images %}
+- path: /etc/systemd/system/{{ containers_images[image].service_name }}.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description={{ containers_images[image].description }}
+    Wants=gcr-online.target
+    After=gcr-online.target
+
+    [Service]
+    Environment="HOME=/home/{{ gcp_deploy_user }}"
+    ExecStartPre=/usr/bin/docker-credential-gcr configure-docker --registries {{ gcp_docker_registry }}
+    ExecStart=/usr/bin/docker run --rm --name={{ containers_images[image].service_name }} {{ gcp_registry_full_prefix}}/{{ containers_images[image].image }} {% if 'command' in containers_images[image] %} {{ containers_images[image].command }}{% endif %} 
+    ExecStop=/usr/bin/docker stop {{ containers_images[image].service_name }} 
+    ExecStopPost=/usr/bin/docker rm {{ containers_images[image].service_name }}
+
+{% endfor %}
+
+runcmd:
+- systemctl daemon-reload
+{% for image in containers_images %}
+- systemctl start {{ containers_images[image].service_name}}.service
+{% endfor %}

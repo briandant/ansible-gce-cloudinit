@@ -1,0 +1,26 @@
+---
+# TODO: create a registry for storing images
+# TODO: create our own service account with proper roles?
+# GCP creates a default user account: https://cloud.google.com/compute/docs/access/service-accounts#default_service_account
+# The default account uses OAUTH scopes for requests, and it only has Cloud Storage get permissions
+# Some discuion on how we do this is here: https://stackoverflow.com/a/57260547/785400
+
+- name: build cloud-init file
+  local_action:
+    module: ansible.builtin.template
+    src: cloud_config.j2
+    dest: ./roles/containers/files/cloud_config.yml
+    mode: 0440
+  tags: ['containers', 'containers:configuration']
+
+- name: update metadata
+  local_action:
+    module: ansible.builtin.shell
+    cmd: >
+      gcloud compute instances add-metadata {{ gcp_instance_name }}
+      --project {{ gcp_project }}
+      --zone {{ gcp_zone }}
+      --metadata-from-file user-data=./roles/containers/files/cloud_config.yml
+  ignore_errors: false
+  when: inventory_hostname in groups['webservers']
+  tags: ['containers', 'containers:metadata', 'containers:configuration']

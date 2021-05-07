@@ -1,0 +1,64 @@
+---
+
+containers_images:
+  postgres:
+    service_name: postgres
+    description: "The postgres database"
+    image: dataexchange_production_postgres
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data:Z
+      - production_postgres_data_backups:/backups:z
+    env_file:
+      - ./env/production/postgres
+
+  redis:
+    service_name: redis
+    description: "The Redis container"
+    image: redis:5.0
+
+  django:
+    service_name: django
+    description: "The Django web app"
+    image: dataexchange_production_django
+    env_file:
+      - ./env/production/django
+      - ./env/production/postgres
+    command: /start
+
+  traefik:
+    service_name: traefik
+    description: "The web proxy"
+    image: dataexchange_production_traefik
+    volumes:
+      - production_traefik:/etc/traefik/acme:z
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"
+
+  celeryworker:
+    service_name: celeryworker
+    description: "The Celery worker"
+    image: dataexchange_production_celeryworker
+    env_file:
+      - ./env/production/django
+      - ./env/production/postgres
+    command: /start-celeryworker
+
+  celerybeat:
+    service_name: celerybeat
+    description: "The Celerybeat container"
+    image: dataexchange_production_celerybeat
+    env_file:
+      - ./env/production/django
+      - ./env/production/postgres
+    command: /start-celerybeat
+
+  flower:
+    service_name: celeryflower
+    description: "The Celery Flower container"
+    image: dataexchange_production_flower
+    env_file:
+      - ./env/production/django
+      - ./env/production/postgres
+    command: /start-flower

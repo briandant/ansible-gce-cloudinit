@@ -1,0 +1,182 @@
+---
+# Notes
+# # These tasks run on localhost
+# See: https://cloud.google.com/container-optimized-os/docs
+# and: https://cloud.google.com/container-optimized-os/docs/how-to/create-configure-instance#gcloud
+# and: https://docs.ansible.com/ansible/latest/scenario_guides/guide_gce.html
+# and: https://docs.ansible.com/ansible/latest/collections/google/cloud/index.html
+# and an example here: https://stackoverflow.com/a/61498969/785400
+# TODO: we need to enable the compute engine API manually for the project; can we get around that?
+# TODO: must create project owner manually, or add the person running this as a project owner
+# TODO: the IAM API needed to be enabled by hand
+# https://docs.ansible.com/ansible/latest/collections/google/cloud/gcp_compute_instance_module.html#ansible-collections-google-cloud-gcp-compute-instance-module
+
+# We create a service account that can build machine.
+# This requires that your Google account has owner permissions on the project
+# in deploy/ansible_vars/base.yml#gcp_project.
+# TODO: We should change this to work with org-level service accounts and
+# store that org-level's key in our vault.  This way, the vault key allows
+# access to create machines (but that vault key should be seperate from other
+# vault keys that allow deployment only, not machine creation).
+# TODO: Create a custom role that properly scopes the needs of this user; his
+# role scope is too wide.
+
+- name: enable the requisite APIs
+  local_action:
+    module: ansible.builtin.shell
+    cmd: gcloud services enable {{ item }} --project {{ gcp_project }}
+  ignore_errors: false
+  with_items: "{{ gcp_apis }}"
+  tags: ['instance', 'instance:apis']
+
+- name: create the machine-building service account
+  local_action:
+    module: google.cloud.gcp_iam_service_account
+    name: "{{ gcp_machine_create_service_email }}"
+    display_name: "{{ gcp_project }} machine user: {{ gcp_machine_create_service_name }}"
+    project: "{{ gcp_project }}"
+    auth_kind: application
+    state: present
+  register: machine_serviceaccount
+  tags: ['instance', 'instance:machine_serviceaccount']
+
+# See: https://cloud.google.com/sdk/gcloud/reference/projects/add-iam-policy-binding
+- name: give this machine-building user permission to create machines
+  local_action:
+    module: ansible.builtin.shell
+    cmd: >
+      gcloud projects add-iam-policy-binding {{ gcp_project }}
+      --member=serviceAccount:{{ gcp_machine_create_service_email }}
+      --role={{ item }}
+  ignore_errors: false
+  with_items: "{{ gcp_machine_create_user_roles }}"
+  tags: ['instance', 'instance:machine_serviceaccount']
+
+- name: delete the IAM key for the machine-building account, if it exists
+  local_action:
+    module: ansible.builtin.file
+    path: "{{ gcp_machine_create_service_file }}"
+    state: absent
+  tags: ['instance', 'instance:machine_serviceaccount']
+
+- name: get an IAM key for the machine-building account
+  local_action:
+    module: google.cloud.gcp_iam_service_account_key
+    service_account: "{{ machine_serviceaccount }}"
+    private_key_type: TYPE_GOOGLE_CREDENTIALS_FILE
+    path: "{{ gcp_machine_create_service_file }}"
+    project: "{{ gcp_project }}"
+    auth_kind: application
+    state: present
+  tags: ['instance', 'instance:machine_serviceaccount']
+
+- name: create a disk
+  local_action:
+    module:  google.cloud.gcp_compute_disk
+    name: dataexchange-disk-instance
+    size_gb: 50
+    source_image: "projects/{{ gcp_image_project }}/global/images/family/{{ gcp_image_family }}"
+    zone: "{{ gcp_zone }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_machine_create_service_file }}"
+    state: present
+  register: disk
+  tags: ['instance', 'instance:disk']
+
+- name: create a network
+  local_action:
+    module: google.cloud.gcp_compute_network
+    name: dataexchange-network-instance
+    auto_create_subnetworks: 'true'
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_machine_create_service_file }}"
+    state: present
+  register: network
+  tags: ['instance', 'instance:network']
+
+- name: open port 22 for ssh
+  local_action:
+    module: google.cloud.gcp_compute_firewall
+    name: dataexchange-allow-ssh
+    allowed:
+    - ip_protocol: tcp
+      ports:
+      - '22'
+    network: "{{ network }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_machine_create_service_file }}"
+    state: present
+  tags: ['instance', 'instance:firewall']
+
+- name: create an address
+  local_action:
+    module: google.cloud.gcp_compute_address
+    name: dataexchange-address-instance
+    region: "{{ gcp_region }}"
+    project: "{{ gcp_project }}"
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_machine_create_service_file }}"
+    state: present
+  register: address
+  tags: ['instance', 'instance:address']
+
+- name: create an instance
+  local_action:
+    module: google.cloud.gcp_compute_instance
+    name: "{{ gcp_instance_name }}"
+    machine_type: "{{ gcp_machine_type }}"
+    zone: "{{ gcp_zone }}"
+    project: "{{ gcp_project }}"
+    # Authentication for the request to create the machine.
+    auth_kind: "{{ gcp_cred_kind }}"
+    service_account_file: "{{ gcp_machine_create_service_file }}"
+    # https://developers.google.com/identity/protocols/oauth2/scopes
+    # We don't set scopes on the instance, because the machine will
+    # have the default scopes, which allow us to do what we need to do.
+    # scopes: N/A
+    #
+    # The service account to assign to this machine.
+    # See: https://cloud.google.com/iam/docs/service-accounts#default
+    service_accounts:
+      - email: "{{ gcp_default_service_account }}"
+        scopes: "{{ gcp_default_service_account_scopes }}"
+    network_interfaces:
+    - network: "{{ network }}"
+      access_configs:
+      - name: External NAT
+        nat_ip: "{{ address }}"
+        type: ONE_TO_ONE_NAT
+    disks:
+    - auto_delete: 'true'
+      boot: 'true'
+      source: "{{ disk }}"
+    state: present
+  tags: ['instance', 'instance:create']
+
+  # - name: create the deploy service account
+  #   local_action:
+  #  module: google.cloud.gcp_iam_service_account
+  #  name: "{{ gcp_deploy_service_account_email }}"
+  #  display_name: "{{ gcp_project }} machine user: {{ gcp_deploy_user }}"
+  #  project: "{{ gcp_project }}"
+  #  auth_kind: serviceaccount
+  #  service_account_file: "{{ gcp_machine_create_service_file }}"
+  #  state: present
+  #   register: deploy_serviceaccount
+  #   tags: ['instance', 'instance:deploy_serviceeaccount']
+
+  # - name: get an IAM key for the service account
+  #   local_action:
+  #  module: google.cloud.gcp_iam_service_account_key
+  #  service_account: "{{ deploy_serviceaccount }}"
+  #  private_key_type: TYPE_GOOGLE_CREDENTIALS_FILE
+  #  path: "{{ gcp_deploy_service_account_file }}"
+  #  project: "{{ gcp_project }}"
+  #  scopes: "{{ gcp_deploy_user_scopes }}"
+  #  auth_kind: serviceaccount
+  #  service_account_file: "{{ gcp_machine_create_service_file }}"
+  #  state: present
+  #   tags: ['instance', 'instance:deploy_serviceaccount']

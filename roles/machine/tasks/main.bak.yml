@@ -1,0 +1,59 @@
+---
+
+# See: https://cloud.google.com/container-optimized-os/docs
+# and: https://cloud.google.com/container-optimized-os/docs/how-to/create-configure-instance#gcloud
+# and: https://docs.ansible.com/ansible/latest/scenario_guides/guide_gce.html
+# and: https://docs.ansible.com/ansible/latest/collections/google/cloud/index.html
+
+gcp_compute_instance:
+    name: dataexchange
+    machine_type: n1-standard-1
+    ... # any other settings
+    zone: us-west1
+    project: "my-project"
+    auth_kind: "service_account_file"
+    service_account_file: "~/my_account.json"
+    metadata_from_file:
+      user-data: "{{ cloud_init }}"
+    state: present
+
+- name: Copy the env files
+  ansible.builtin.copy:
+    src: env/
+    dest: /opt/dataexchange/env
+    mode: '0644'
+  tags: environment
+
+- name: Create directory for the Google Cloud Keyfile
+  ansible.builtin.file:
+    path: "{{ docker_login_keyfile_dir }}"
+    state: directory
+  tags: ['docker', 'docker:configuration']
+
+- name: Add Deploy Google Cloud Keyfile
+  ansible.builtin.copy:
+    content: "{{ gcloud_deploy_service_account_json }}"
+    dest: "{{ docker_login_keyfile_path }}"
+  tags: ['docker', 'docker:configuration', 'app']
+
+- name: Login to gcr.io registry
+  shell: docker login -u _json_key --password-stdin https://gcr.io < "{{ docker_login_keyfile_path }}"
+  tags: ['docker', 'docker:configuration', 'app']
+
+- name: Remove Deploy Google Cloud Keyfile
+  file: path="{{ docker_login_keyfile_path }}" state=absent
+  tags: ['docker', 'docker:configuration', 'app']
+
+- name: Pull the images from the registry
+  community.docker.docker_image:
+    name: "{{ gcr_prefix }} {{ item }}"
+    source: pull
+    with_items:
+    - dataexchange_production_django
+    - dataexchange_production_postgres
+    - dataexchange_production_traefik
+    - "redis:5.0"
+    - dataexchange_production_celeryworker
+    - dataexchange_production_celerybeat
+    - dataexchange_production_flower
+  tags: containers

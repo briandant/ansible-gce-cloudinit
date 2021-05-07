@@ -1,0 +1,7 @@
+[program:dataexchange]
+command=docker-compose -f production.yml up
+directory=/opt/dataexchange/
+redirect_stderr=true
+autostart=true
+autorestart=true
+priority=10

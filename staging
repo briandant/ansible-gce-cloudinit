@@ -1,0 +1,8 @@
+[all:vars]
+env=staging
+
+[webservers]
+de-staging.briandant.com
+
+[dbservers]
+de-staging.briandant.com

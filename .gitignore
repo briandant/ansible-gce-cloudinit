@@ -1,0 +1,6 @@
+# Vagrant
+.vagrant
+
+# Ansible retry files
+*.retry
+vault-key

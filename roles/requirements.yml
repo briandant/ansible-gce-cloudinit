@@ -1,0 +1,6 @@
+---
+# https://docs.ansible.com/ansible/devel/user_guide/collections_using.html#install-multiple-collections-with-a-requirements-file
+# https://docs.ansible.com/ansible/latest/collections/google/cloud/index.html
+collections:
+- google.cloud
+- ansible.posix
