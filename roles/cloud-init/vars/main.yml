@@ -3,6 +3,8 @@ cloud_init__docker_release: 20.10.2-0ubuntu1~20.04.2
 cloud_init__ansible_release: 2.9.6+dfsg-1
 cloud_init__github_repo_owner: briandant
 cloud_init__github_repo_name: ansible-gce-cloudinit
+cloud_init__ansible_repo_remote: "{{ cloud_init__github_repo_owner }}/{{cloud_init__github_repo_name}}"
+cloud_init__ansible_repo_local: /opt/{{ cloud_init__github_repo_name }}/
 
 containers_images:
   postgres:
