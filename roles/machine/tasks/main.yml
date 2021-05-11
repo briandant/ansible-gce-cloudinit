@@ -21,13 +21,15 @@
 # TODO: Create a custom role that properly scopes the needs of this user; his
 # role scope is too wide.
 
+# To push images to the registry and execute the tasks below, we
+# need to enable the "registry" and "compute" APIs.
 - name: enable the requisite APIs
   local_action:
     module: ansible.builtin.shell
     cmd: gcloud services enable {{ item }} --project {{ gcp_project }}
   ignore_errors: false
   with_items: "{{ gcp_apis }}"
-  tags: ['instance', 'instance:apis']
+  tags: ['machine', 'machine:apis']
 
 - name: create the machine-building service account
   local_action:
@@ -35,12 +37,12 @@
     name: "{{ gcp_machine_create_service_email }}"
     display_name: "{{ gcp_project }} machine user: {{ gcp_machine_create_service_name }}"
     project: "{{ gcp_project }}"
+    # We assume that you're authenticated with the gcloud CLI.
     auth_kind: application
     state: present
   register: machine_serviceaccount
-  tags: ['instance', 'instance:machine_serviceaccount']
+  tags: ['machine', 'machine:machine_serviceaccount']
 
-# See: https://cloud.google.com/sdk/gcloud/reference/projects/add-iam-policy-binding
 - name: give this machine-building user permission to create machines
   local_action:
     module: ansible.builtin.shell
@@ -50,14 +52,14 @@
       --role={{ item }}
   ignore_errors: false
   with_items: "{{ gcp_machine_create_user_roles }}"
-  tags: ['instance', 'instance:machine_serviceaccount']
+  tags: ['machine', 'machine:machine_serviceaccount']
 
 - name: delete the IAM key for the machine-building account, if it exists
   local_action:
     module: ansible.builtin.file
     path: "{{ gcp_machine_create_service_file }}"
     state: absent
-  tags: ['instance', 'instance:machine_serviceaccount']
+  tags: ['machine', 'machine:machine_serviceaccount']
 
 - name: get an IAM key for the machine-building account
   local_action:
@@ -68,7 +70,7 @@
     project: "{{ gcp_project }}"
     auth_kind: application
     state: present
-  tags: ['instance', 'instance:machine_serviceaccount']
+  tags: ['machine', 'machine:machine_serviceaccount']
 
 - name: create a disk
   local_action:
@@ -82,7 +84,7 @@
     service_account_file: "{{ gcp_machine_create_service_file }}"
     state: present
   register: disk
-  tags: ['instance', 'instance:disk']
+  tags: ['machine', 'machine:disk']
 
 - name: create a network
   local_action:
@@ -94,7 +96,7 @@
     service_account_file: "{{ gcp_machine_create_service_file }}"
     state: present
   register: network
-  tags: ['instance', 'instance:network']
+  tags: ['machine', 'machine:network']
 
 - name: open port 22 for ssh
   local_action:
@@ -109,7 +111,7 @@
     auth_kind: "{{ gcp_cred_kind }}"
     service_account_file: "{{ gcp_machine_create_service_file }}"
     state: present
-  tags: ['instance', 'instance:firewall']
+  tags: ['machine', 'machine:firewall']
 
 - name: create an address
   local_action:
@@ -121,7 +123,7 @@
     service_account_file: "{{ gcp_machine_create_service_file }}"
     state: present
   register: address
-  tags: ['instance', 'instance:address']
+  tags: ['machine', 'machine:address']
 
 - name: create an instance
   local_action:
@@ -154,7 +156,7 @@
       boot: 'true'
       source: "{{ disk }}"
     state: present
-  tags: ['instance', 'instance:create']
+  tags: ['machine', 'machine:create']
 
   # - name: create the deploy service account
   #   local_action:

@@ -34,11 +34,11 @@ gcp_default_service_account_scopes:
   - https://www.googleapis.com/auth/devstorage.read_only
 
 # Machine-creating service account #
-gcp_machine_create_service_name: alphasphinx
-gcp_machine_create_service_email: "service-{{ gcp_machine_create_service_name }}@{{ gcp_project}}.iam.gserviceaccount.com"
-gcp_machine_create_service_file: "/tmp/{{ gcp_machine_create_service_name }}-service-account-key.json"
+gcp_createmachine_user_name: alphasphinx
+gcp_createmachine_user_email: "service-{{ gcp_machine_create_service_name }}@{{ gcp_project}}.iam.gserviceaccount.com"
+gcp_createmachine_user_file: "/tmp/{{ gcp_machine_create_service_name }}-service-account-key.json"
 # See perms reference: https://cloud.google.com/iam/docs/permissions-reference
-gcp_machine_create_user_roles:
+gcp_createmachine_user_roles:
   - roles/compute.instanceAdmin.v1
   - roles/compute.networkAdmin
   - roles/iam.serviceAccountUser
