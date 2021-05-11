@@ -25,14 +25,6 @@ users:
 write_files:
 {# ssh config to allow our deployment user to fetch the Ansible repo #}
 {# See https://docs.github.com/en/developers/overview/managing-deploy-keys#machine-users #}
-- path: /home/{{ gcp_deploy_user }}/.ssh/{{ gcp_deploy_user}}_github_rsa
-  permissions: 600
-  owner: {{ gcp_deploy_user }}
-  content: |
-  {%+ if machineuser_key is defined %}
-    {{ machineuser_key }} 
-  {% endif %}
-
 {# Application containers #}
 {% for image in containers_images %}
 - path: /etc/systemd/system/{{ containers_images[image].service_name }}.service
@@ -54,6 +46,7 @@ write_files:
 {% endfor %}
 
 runcmd:
+- TOKEN={{ machineuser_oauth_token_github }} ansible-pull -U https://$TOKEN:x-oauth-basic@github.com/org/repo -d /opt/org/repo
 - systemctl daemon-reload
 {% for image in containers_images %}
 - systemctl start {{ containers_images[image].service_name}}.service
