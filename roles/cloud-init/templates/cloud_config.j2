@@ -46,7 +46,7 @@ write_files:
 {% endfor %}
 
 runcmd:
-- TOKEN={{ machineuser_oauth_token_github }} ansible-pull -U https://$TOKEN:x-oauth-basic@github.com/org/repo -d /opt/org/repo
+- TOKEN={{ machineuser_oauth_token_github }} ansible-pull -U https://$TOKEN:x-oauth-basic@{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }}
 - systemctl daemon-reload
 {% for image in containers_images %}
 - systemctl start {{ containers_images[image].service_name}}.service
