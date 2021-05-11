@@ -9,7 +9,7 @@
   local_action:
     module: ansible.builtin.template
     src: cloud_config.j2
-    dest: ./roles/containers/files/cloud_config.yml
+    dest: ./cloud_config.yml
     mode: 0440
   tags: ['containers', 'containers:configuration']
 
@@ -20,7 +20,7 @@
       gcloud compute instances add-metadata {{ gcp_instance_name }}
       --project {{ gcp_project }}
       --zone {{ gcp_zone }}
-      --metadata-from-file user-data=./roles/containers/files/cloud_config.yml
+      --metadata-from-file user-data=cloud_config.yml
   ignore_errors: false
   when: inventory_hostname in groups['webservers']
   tags: ['containers', 'containers:metadata', 'containers:configuration']

@@ -1,20 +1,13 @@
 ---
 gcp_cred_kind: "serviceaccount"
-gcp_docker_registry: gcr.io
-gcp_project: dataexchange-redux-313019
 # dataexchange-311421
-gcp_project_number: 1073747879403
 # 141784097243
-gcp_registry_full_prefix: "{{ gcp_docker_registry }}/{{ gcp_project }}"
 gcp_image_project: ubuntu-os-cloud
 gcp_image_family: ubuntu-2004-lts
-gcp_instance_name: dataexchange-ubuntu
 gcp_instance_scopes:
   - default
 # See machine types here: https://cloud.google.com/compute/docs/machine-types#n1_shared-core_machine_types
 gcp_machine_type: g1-small
-gcp_region: us-west1
-gcp_zone: us-west1-a
 # This key is tied to an account with "project owner" permissions.
 # gcp_service_account_file: "dataexchange-311421-b1b8d9308172.json"
 

@@ -1,4 +1,5 @@
 ---
+cloud_init__docker_release: 20.10.6
 
 containers_images:
   postgres:
@@ -62,3 +63,4 @@ containers_images:
       - ./env/production/django
       - ./env/production/postgres
     command: /start-flower
+

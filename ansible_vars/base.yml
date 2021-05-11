@@ -6,5 +6,12 @@ gcp_deploy_service_account_file: "{{ gcp_deploy_user }}-service-account_key.json
 gcp_deploy_user_scopes:
   - https://www.googleapis.com/auth/devstorage.read_only
 
+gcp_project: dataexchange-redux-313019
+gcp_project_number: 1073747879403
+gcp_instance_name: dataexchange-ubuntu
+gcp_region: us-west1
+gcp_zone: us-west1-a
+
 # Docker
-cloud_init__docker_release: 20.10.6
+gcp_docker_registry: gcr.io
+gcp_registry_full_prefix: "{{ gcp_docker_registry }}/{{ gcp_project }}"
