@@ -10,7 +10,10 @@
     module: ansible.builtin.template
     src: cloud_config.j2
     dest: ./cloud_config.yml
-    mode: 0440
+    mode: 0640
+    # This ensures that our variables are rendered properly.
+    # See https://ttl255.com/jinja2-tutorial-part-3-whitespace-control/#exampleplaybooks
+    # lstrip_blocks: yes
   tags: ['containers', 'containers:configuration']
 
 - name: update metadata
@@ -23,4 +26,4 @@
       --metadata-from-file user-data=cloud_config.yml
   ignore_errors: false
   when: inventory_hostname in groups['webservers']
-  tags: ['containers', 'containers:metadata', 'containers:configuration']
+  tags: ['containers', 'containers:metadata']

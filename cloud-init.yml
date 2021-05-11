@@ -5,6 +5,7 @@
   vars_files:
     - ansible_vars/base.yml
     - ansible_vars/{{ env }}.yml
+    - ansible_vars/vault-{{ env }}.yml
 
   roles:
     - cloud-init
