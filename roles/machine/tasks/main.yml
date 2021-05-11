@@ -34,8 +34,8 @@
 - name: create the machine-building service account
   local_action:
     module: google.cloud.gcp_iam_service_account
-    name: "{{ gcp_machine_create_service_email }}"
-    display_name: "{{ gcp_project }} machine user: {{ gcp_machine_create_service_name }}"
+    name: "{{ gcp_createmachine_user_email }}"
+    display_name: "{{ gcp_project }} machine user: {{ gcp_createmachine_user_name }}"
     project: "{{ gcp_project }}"
     # We assume that you're authenticated with the gcloud CLI.
     auth_kind: application
@@ -48,16 +48,16 @@
     module: ansible.builtin.shell
     cmd: >
       gcloud projects add-iam-policy-binding {{ gcp_project }}
-      --member=serviceAccount:{{ gcp_machine_create_service_email }}
+      --member=serviceAccount:{{ gcp_createmachine_user_email }}
       --role={{ item }}
   ignore_errors: false
-  with_items: "{{ gcp_machine_create_user_roles }}"
+  with_items: "{{ gcp_createmachine_user_roles }}"
   tags: ['machine', 'machine:machine_serviceaccount']
 
 - name: delete the IAM key for the machine-building account, if it exists
   local_action:
     module: ansible.builtin.file
-    path: "{{ gcp_machine_create_service_file }}"
+    path: "{{ gcp_createmachine_user_keyfile }}"
     state: absent
   tags: ['machine', 'machine:machine_serviceaccount']
 
@@ -66,7 +66,7 @@
     module: google.cloud.gcp_iam_service_account_key
     service_account: "{{ machine_serviceaccount }}"
     private_key_type: TYPE_GOOGLE_CREDENTIALS_FILE
-    path: "{{ gcp_machine_create_service_file }}"
+    path: "{{ gcp_createmachine_user_keyfile }}"
     project: "{{ gcp_project }}"
     auth_kind: application
     state: present
@@ -75,13 +75,13 @@
 - name: create a disk
   local_action:
     module:  google.cloud.gcp_compute_disk
-    name: dataexchange-disk-instance
+    name: "{{ gcp_instance_name }}-disk"
     size_gb: 50
     source_image: "projects/{{ gcp_image_project }}/global/images/family/{{ gcp_image_family }}"
     zone: "{{ gcp_zone }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
-    service_account_file: "{{ gcp_machine_create_service_file }}"
+    service_account_file: "{{ gcp_createmachine_user_keyfile }}"
     state: present
   register: disk
   tags: ['machine', 'machine:disk']
@@ -89,11 +89,11 @@
 - name: create a network
   local_action:
     module: google.cloud.gcp_compute_network
-    name: dataexchange-network-instance
+    name: "{{ gcp_instance_name }}-network"
     auto_create_subnetworks: 'true'
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
-    service_account_file: "{{ gcp_machine_create_service_file }}"
+    service_account_file: "{{ gcp_createmachine_user_keyfile }}"
     state: present
   register: network
   tags: ['machine', 'machine:network']
@@ -109,18 +109,18 @@
     network: "{{ network }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
-    service_account_file: "{{ gcp_machine_create_service_file }}"
+    service_account_file: "{{ gcp_createmachine_user_keyfile }}"
     state: present
   tags: ['machine', 'machine:firewall']
 
 - name: create an address
   local_action:
     module: google.cloud.gcp_compute_address
-    name: dataexchange-address-instance
+    name: "{{ gcp_instance_name }}-address"
     region: "{{ gcp_region }}"
     project: "{{ gcp_project }}"
     auth_kind: "{{ gcp_cred_kind }}"
-    service_account_file: "{{ gcp_machine_create_service_file }}"
+    service_account_file: "{{ gcp_createmachine_user_keyfile }}"
     state: present
   register: address
   tags: ['machine', 'machine:address']
@@ -134,7 +134,7 @@
     project: "{{ gcp_project }}"
     # Authentication for the request to create the machine.
     auth_kind: "{{ gcp_cred_kind }}"
-    service_account_file: "{{ gcp_machine_create_service_file }}"
+    service_account_file: "{{ gcp_createmachine_user_keyfile }}"
     # https://developers.google.com/identity/protocols/oauth2/scopes
     # We don't set scopes on the instance, because the machine will
     # have the default scopes, which allow us to do what we need to do.
@@ -165,7 +165,7 @@
   #  display_name: "{{ gcp_project }} machine user: {{ gcp_deploy_user }}"
   #  project: "{{ gcp_project }}"
   #  auth_kind: serviceaccount
-  #  service_account_file: "{{ gcp_machine_create_service_file }}"
+  #  service_account_file: "{{ gcp_createmachine_user_keyfile }}"
   #  state: present
   #   register: deploy_serviceaccount
   #   tags: ['instance', 'instance:deploy_serviceeaccount']
@@ -179,6 +179,6 @@
   #  project: "{{ gcp_project }}"
   #  scopes: "{{ gcp_deploy_user_scopes }}"
   #  auth_kind: serviceaccount
-  #  service_account_file: "{{ gcp_machine_create_service_file }}"
+  #  service_account_file: "{{ gcp_createmachine_user_keyfile }}"
   #  state: present
   #   tags: ['instance', 'instance:deploy_serviceaccount']

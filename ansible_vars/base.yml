@@ -1,4 +1,3 @@
-
 # Deploy user account #
 gcp_deploy_user: omegasphinx
 gcp_deploy_userid: 2000
@@ -6,3 +5,6 @@ gcp_deploy_service_account_email: "service-{{ gcp_deploy_user }}@{{ gcp_project 
 gcp_deploy_service_account_file: "{{ gcp_deploy_user }}-service-account_key.json"
 gcp_deploy_user_scopes:
   - https://www.googleapis.com/auth/devstorage.read_only
+
+# Docker
+cloud_init__docker_release: 20.10.6
