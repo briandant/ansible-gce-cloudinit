@@ -18,6 +18,7 @@ gcp_registry_full_prefix: "{{ gcp_docker_registry }}/{{ gcp_project }}"
 
 # vars for https://github.com/fubarhouse/ansible-role-golang
 go_version: 1.16
+go_install_clean: true
 GOPATH: /home/{{ gcp_deploy_user }}/go
 GOROOT: /usr/local/go
 GOPROXY: https://proxy.golang.org
