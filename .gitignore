@@ -3,4 +3,7 @@
 
 # Ansible retry files
 *.retry
+
+# Ours
 vault-key
+cloud_config.yml

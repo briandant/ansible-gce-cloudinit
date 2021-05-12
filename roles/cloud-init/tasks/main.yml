@@ -13,7 +13,7 @@
     mode: 0640
     # This ensures that our variables are rendered properly.
     # See https://ttl255.com/jinja2-tutorial-part-3-whitespace-control/#exampleplaybooks
-    # lstrip_blocks: yes
+    lstrip_blocks: yes
   tags: ['containers', 'containers:configuration']
 
 - name: update metadata
