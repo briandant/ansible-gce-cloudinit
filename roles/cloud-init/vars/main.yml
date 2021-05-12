@@ -8,6 +8,7 @@ cloud_init__ansible_repo_remote: "{{ cloud_init__github_repo_owner }}/{{cloud_in
 cloud_init__ansible_repo_local: /opt/{{ cloud_init__github_repo_name }}/
 cloud_init__galaxy_packages:
   - fubarhouse.golang
+cloud_init__ansible_repo_location: /opt/dataexchange/
 
 containers_images:
   postgres:
