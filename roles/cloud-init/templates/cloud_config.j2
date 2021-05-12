@@ -68,7 +68,7 @@ write_files:
 runcmd:
   {# See https://docs.ansible.com/ansible/latest/cli/ansible-pull.html #}
   - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
-  - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@github.com/{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key remote-build.yml
+  - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@github.com/{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key local.yml -i hosts 
   - systemctl daemon-reload
   {% for image in containers_images %}
   - systemctl start {{ containers_images[image].service_name}}.service
