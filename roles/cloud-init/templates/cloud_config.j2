@@ -3,6 +3,7 @@
 packages:
   - docker.io={{ cloud_init__docker_release }}
   - ansible={{ cloud_init__ansible_release }}
+  - golang-go={{ cloud_init__go_release }} 
 
 users:
 - name: {{ gcp_deploy_user }}
@@ -46,7 +47,6 @@ write_files:
 {% endfor %}
 
 runcmd:
-- TOKEN={{ machineuser_oauth_token_github }} ansible-pull -U https://$TOKEN:x-oauth-basic@{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }}
 - systemctl daemon-reload
 {% for image in containers_images %}
 - systemctl start {{ containers_images[image].service_name}}.service
