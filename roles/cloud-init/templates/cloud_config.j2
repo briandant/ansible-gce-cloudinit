@@ -1,3 +1,4 @@
+---
 #cloud-config
 
 packages:
@@ -5,8 +6,8 @@ packages:
   - ansible={{ cloud_init__ansible_release }}
 
 users:
-- name: {{ gcp_deploy_user }}
-  uid: {{ gcp_deploy_userid }}
+  - name: {{ gcp_deploy_user }}
+    uid: {{ gcp_deploy_userid }}
 {# #### Authentication #### #}
     {# We configure the docker-credential-helper to find the service account key (with `config --token-source="env"`), #}
     {# then we configure docker-credential-gcr to work with requests made to our registry. #}
@@ -26,39 +27,46 @@ write_files:
 {# ssh config to allow our deployment user to fetch the Ansible repo #}
 {# See https://docs.github.com/en/developers/overview/managing-deploy-keys#machine-users #}
 {# Application containers #}
-{% for image in containers_images %}
-- path: /etc/systemd/system/{{ containers_images[image].service_name }}.service
-  permissions: 0644
-  owner: root
-  content: |
-    [Unit]
-    Description={{ containers_images[image].description }}
-    Wants=gcr-online.target
-    After=gcr-online.target
+  {% for image in containers_images %}
+  - path: /etc/systemd/system/{{ containers_images[image].service_name }}.service
+    permissions: 0644
+    owner: root
+    content: |
+      [Unit]
+      Description={{ containers_images[image].description }}
+      Wants=gcr-online.target
+      After=gcr-online.target
 
-    [Service]
-    Environment="HOME=/home/{{ gcp_deploy_user }}"
-    ExecStartPre=/usr/bin/docker-credential-gcr configure-docker --registries {{ gcp_docker_registry }}
-    ExecStart=/usr/bin/docker run --rm --name={{ containers_images[image].service_name }} {{ gcp_registry_full_prefix}}/{{ containers_images[image].image }} {% if 'command' in containers_images[image] %} {{ containers_images[image].command }}{% endif %} 
-    ExecStop=/usr/bin/docker stop {{ containers_images[image].service_name }} 
-    ExecStopPost=/usr/bin/docker rm {{ containers_images[image].service_name }}
+      [Service]
+      Environment="HOME=/home/{{ gcp_deploy_user }}"
+      ExecStartPre=/usr/bin/docker-credential-gcr configure-docker --registries {{ gcp_docker_registry }}
+      ExecStart=/usr/bin/docker run --rm --name={{ containers_images[image].service_name }} {{ gcp_registry_full_prefix}}/{{ containers_images[image].image }} {% if 'command' in containers_images[image] %} {{ containers_images[image].command }}{% endif %} 
+      ExecStop=/usr/bin/docker stop {{ containers_images[image].service_name }} 
+      ExecStopPost=/usr/bin/docker rm {{ containers_images[image].service_name }}
 
-{% endfor %}
+  {% endfor %}
 
-- path /opt/galaxy-requirements.yml
-  permissions: 0644
-  owner: root
-  content: |
-    ---
-    {% for package in cloud_init__galaxy_packages %}
-    - src: {{ package }}
-    {% endfor %}
+  - path: /opt/galaxy-requirements.yml
+    content: |
+      ---
+      {% for package in cloud_init__galaxy_packages %}
+      - src: {{ package }}
+      {% endfor %}
+    permissions: 0644
+    owner: root
+
+  - path: /opt/ansible.cfg
+    content: |
+      [defaults]
+      log_path = /var/log/ansible.log
+    owner: root
+    permissions: 0644
 
 runcmd:
-{# See https://docs.ansible.com/ansible/latest/cli/ansible-pull.html #}
-- /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
-- /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }:x-oauth-basic@{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key remote-build.yml
-- systemctl daemon-reload
-{% for image in containers_images %}
-- systemctl start {{ containers_images[image].service_name}}.service
-{% endfor %}
+  {# See https://docs.ansible.com/ansible/latest/cli/ansible-pull.html #}
+  - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
+  - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key remote-build.yml
+  - systemctl daemon-reload
+  {% for image in containers_images %}
+  - systemctl start {{ containers_images[image].service_name}}.service
+  {% endfor %}

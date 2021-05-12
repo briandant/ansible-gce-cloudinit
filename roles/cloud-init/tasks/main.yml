@@ -16,6 +16,13 @@
     lstrip_blocks: yes
   tags: ['containers', 'containers:configuration']
 
+- name: lint the yaml file
+  local_action:
+    module: ansible.builtin.shell
+    cmd: yamllint ./cloud_config.yml
+  ignore_errors: false
+  tags: ['containers', 'containers:configuration']
+
 - name: update metadata
   local_action:
     module: ansible.builtin.shell
@@ -27,3 +34,4 @@
   ignore_errors: false
   when: inventory_hostname in groups['webservers']
   tags: ['containers', 'containers:metadata']
+
