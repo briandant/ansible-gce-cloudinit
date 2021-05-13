@@ -142,6 +142,11 @@
     #
     # The service account to assign to this machine.
     # See: https://cloud.google.com/iam/docs/service-accounts#default
+    metadata:
+      user-data: "{{ lookup('file', cloud_init__config_location) }}"
+    # We *must* pass the default account or no account will be assigned;
+    # and we *must* pass scopes, or Ansible assumes --no-scopes, rather
+    # than the default scope.
     service_accounts:
       - email: "{{ gcp_default_service_account }}"
         scopes: "{{ gcp_default_service_account_scopes }}"

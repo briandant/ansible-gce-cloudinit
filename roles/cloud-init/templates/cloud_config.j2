@@ -59,6 +59,7 @@ write_files:
       [defaults]
       log_path = /var/log/ansible.log
       {# This will force Ansible to get the repo again #}
+      {# See https://github.com/ansible/ansible/issues/17454#issuecomment-245624654 #}
       hostfile = {{ cloud_init__ansible_repo_local }}
     owner: root
     permissions: "0644"

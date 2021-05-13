@@ -9,7 +9,7 @@
   local_action:
     module: ansible.builtin.template
     src: cloud_config.j2
-    dest: ./cloud_config.yml
+    dest: "{{ cloud_init__config_location }}"
     mode: 0640
     # This ensures that our variables are rendered properly.
     # See https://ttl255.com/jinja2-tutorial-part-3-whitespace-control/#exampleplaybooks
@@ -19,7 +19,7 @@
 - name: lint the yaml file
   local_action:
     module: ansible.builtin.shell
-    cmd: yamllint ./cloud_config.yml
+    cmd: yamllint "{{ cloud_init__config_location }}"
   ignore_errors: false
   tags: ['containers', 'containers:configuration']
 
@@ -30,7 +30,7 @@
       gcloud compute instances add-metadata {{ gcp_instance_name }}
       --project {{ gcp_project }}
       --zone {{ gcp_zone }}
-      --metadata-from-file user-data=cloud_config.yml
+      --metadata-from-file user-data={{ cloud_init__config_location }}
   ignore_errors: false
   when: inventory_hostname in groups['webservers']
   tags: ['containers', 'containers:metadata']

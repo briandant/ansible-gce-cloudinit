@@ -16,9 +16,19 @@ gcp_zone: us-west1-a
 gcp_docker_registry: gcr.io
 gcp_registry_full_prefix: "{{ gcp_docker_registry }}/{{ gcp_project }}"
 
-# vars for https://github.com/fubarhouse/ansible-role-golang
+# ############### #
+#       Go        #
+# ############### #
+# https://github.com/fubarhouse/ansible-role-golang
 go_version: 1.16
 go_install_clean: true
+go_get:
+- name: docker-credential-gcr
+  url: github.com/GoogleCloudPlatform/docker-credential-gcr
+golang_shell_profile: /root/.bashrc
+
 GOPATH: /home/{{ gcp_deploy_user }}/go
 GOROOT: /usr/local/go
 GOPROXY: https://proxy.golang.org
+
+cloud_init__config_location: ./cloud-config-user-data.yml
