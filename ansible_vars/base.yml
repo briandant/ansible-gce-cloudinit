@@ -27,7 +27,6 @@ go_get:
   url: github.com/GoogleCloudPlatform/docker-credential-gcr
 
 GOPATH: /home/{{ gcp_deploy_user }}/go
-go_path: /home/{{ gcp_deploy_user }}/go
 GOROOT: /usr/local/go
 GOPROXY: https://proxy.golang.org
 

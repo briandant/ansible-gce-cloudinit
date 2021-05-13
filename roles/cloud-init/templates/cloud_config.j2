@@ -7,13 +7,14 @@ packages:
 users:
   - name: {{ gcp_deploy_user }}
     uid: {{ gcp_deploy_userid }}
+
 {# #### Authentication #### #}
-    {# We configure the docker-credential-helper to find the service account key (with `config --token-source="env"`), #}
-    {# then we configure docker-credential-gcr to work with requests made to our registry. #}
-    {# With those two items in place, any attempt to pull from our registry will use the service account, #}
-    {# which we configure with a JSON key in ansible_vars/vault-production.yml#gcp_deployuser_serviceaccount_key. #} 
-    {# On all this, see : https://cloud.google.com/container-optimized-os/docs/how-to/run-container-instance#accessing_private_images_in_or #} 
-    {# and see: https://github.com/GoogleCloudPlatform/docker-credential-gcr#gcr-credentials #}
+{# We configure the docker-credential-helper to find the service account key (with `config --token-source="env"`), #}
+{# then we configure docker-credential-gcr to work with requests made to our registry. #}
+{# With those two items in place, any attempt to pull from our registry will use the service account, #}
+{# which we configure with a JSON key in ansible_vars/vault-production.yml#gcp_deployuser_serviceaccount_key. #} 
+{# On all this, see : https://cloud.google.com/container-optimized-os/docs/how-to/run-container-instance#accessing_private_images_in_or #} 
+{# and see: https://github.com/GoogleCloudPlatform/docker-credential-gcr#gcr-credentials #}
 
 {# - path: "{{ gcp_deploy_service_account_file }} #}
 {#  permissions: 0644 #}
@@ -70,7 +71,12 @@ write_files:
 
 runcmd:
   {# See https://docs.ansible.com/ansible/latest/cli/ansible-pull.html #}
-  - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
+  {# Put the GOPATH on PATH to automatically build docker-credential-gcr.
+  {# See https://github.com/GoogleCloudPlatform/docker-credential-gcr#building-from-source
+  {# And note that fubarhouse.golang runs `go get` before it configures any shell integration, #}
+  {# so using shell integration would not help. #}
+  {# See https://github.com/fubarhouse/ansible-role-golang/blob/master/tasks/main.yml#L19-L35 #}
+  - PATH:$PATH:{{ GOPATH }} ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
   - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@github.com/{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key local.yml
   - systemctl daemon-reload
   {% for image in containers_images %}

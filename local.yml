@@ -6,13 +6,5 @@
     - "ansible_vars/base.yml"
     - "ansible_vars/production.yml"
 
-  # Put the GOPATH on PATH to automatically build docker-credential-gcr.
-  # See https://github.com/GoogleCloudPlatform/docker-credential-gcr#building-from-source
-  # And note that fubarhouse.golang runs `go get` before it configures any shell integration,
-  # so using shell integration would not help.
-  # See https://github.com/fubarhouse/ansible-role-golang/blob/master/tasks/main.yml#L19-L35
-  environment:
-    PATH:$PATH:/usr/omegasphinx/go
-
   roles:
     - fubarhouse.golang
