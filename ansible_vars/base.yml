@@ -25,7 +25,6 @@ go_install_clean: true
 go_get:
 - name: docker-credential-gcr
   url: github.com/GoogleCloudPlatform/docker-credential-gcr
-golang_shell_profile: /root/.bashrc
 
 GOPATH: /home/{{ gcp_deploy_user }}/go
 GOROOT: /usr/local/go

@@ -6,4 +6,4 @@
 
 # Ours
 vault-key
-cloud_config.yml
+cloud-config-user-data.yml
