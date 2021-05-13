@@ -12,7 +12,7 @@
   # so using shell integration would not help.
   # See https://github.com/fubarhouse/ansible-role-golang/blob/master/tasks/main.yml#L19-L35
   environment:
-    PATH:$PATH:{{ go_path }}
+    PATH:$PATH:/usr/omegasphinx/go
 
   roles:
     - fubarhouse.golang
