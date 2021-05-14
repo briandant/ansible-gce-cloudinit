@@ -33,4 +33,4 @@ cloud_init__config_location: ./cloud-config-user-data.yml
 docker_credential_gcr__version: 2.0.4
 docker_credential_gcr__os: linux
 docker_credential_gcr__arch: amd64
-docker_credential_gcr__uri:  "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v{{docker_credential_gcr__version}}/docker-credential-gcr_{{ docker_credential_gcr__os }}_{{ docker_credential_gcr__arch }}-{{ docker-credential_gcr__version }}.tar.gz"
+docker_credential_gcr__uri:  "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v{{ docker_credential_gcr__version }}/docker-credential-gcr_{{ docker_credential_gcr__os }}_{{ docker_credential_gcr__arch }}-{{ docker_credential_gcr__version }}.tar.gz"
