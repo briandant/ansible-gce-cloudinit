@@ -22,12 +22,15 @@ gcp_registry_full_prefix: "{{ gcp_docker_registry }}/{{ gcp_project }}"
 # https://github.com/fubarhouse/ansible-role-golang
 go_version: 1.16
 go_install_clean: true
-go_get:
-- name: docker-credential-gcr
-  url: github.com/GoogleCloudPlatform/docker-credential-gcr
 
 GOPATH: /home/{{ gcp_deploy_user }}/go
 GOROOT: /usr/local/go
 GOPROXY: https://proxy.golang.org
 
 cloud_init__config_location: ./cloud-config-user-data.yml
+
+# See https://cloud.google.com/artifact-registry/docs/docker/authentication#standalone-helper
+docker_credential_gcr__version: 2.0.4
+docker_credential_gcr__os: linux
+docker_credential_gcr__arch: amd64
+docker_credential_gcr__uri:  "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v{{docker_credential_gcr__version}}/docker-credential-gcr_{{ docker_credential_gcr__os }}_{{ docker_credential_gcr__arch }}-{{ docker-credential_gcr__version }}.tar.gz"

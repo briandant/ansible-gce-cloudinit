@@ -76,8 +76,8 @@ runcmd:
   {# And note that fubarhouse.golang runs `go get` before it configures any shell integration, #}
   {# so using shell integration would not help. #}
   {# See https://github.com/fubarhouse/ansible-role-golang/blob/master/tasks/main.yml#L19-L35 #}
-  - PATH=$PATH:{{ GOPATH }} ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
-  - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@github.com/{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key local.yml
+  - PATH=$PATH:{{ GOPATH }} ANSIBLE_CONFIG=/opt/ansible.cfg bash -c "/usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml"
+  - ANSIBLE_CONFIG=/opt/ansible.cfg bash -c "/usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@github.com/{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key local.yml"
   - systemctl daemon-reload
   {% for image in containers_images %}
   - systemctl start {{ containers_images[image].service_name}}.service
