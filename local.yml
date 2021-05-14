@@ -12,8 +12,8 @@
   tasks:
     - name: download docker-credential-gcr
       ansible.builtin.shell: "curl -fsSL {{ docker_credential_gcr__uri|quote }} | tar xz"
-        args:
-          creates: /usr/bin/docker-credential-gcr
+      args:
+        creates: /usr/bin/docker-credential-gcr
 
     - name: make docker-credential-gcr executable
       ansible.builtin.file:
