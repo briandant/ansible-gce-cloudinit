@@ -2,6 +2,9 @@
 - name: Builds out the machine, user with Ansible Pull
   hosts: localhost
 
+  vars:
+    env: production
+
   vars_files:
     - "ansible_vars/base.yml"
     - "ansible_vars/{{ env }}.yml"

@@ -1,6 +1,6 @@
 ---
 - name: Deploy containers
-  hosts: ['localhost']
+  hosts: ['webservers', 'localhost']
 
   vars_files:
     - ansible_vars/base.yml
