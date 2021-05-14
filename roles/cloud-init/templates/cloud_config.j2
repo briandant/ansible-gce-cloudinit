@@ -46,6 +46,7 @@ write_files:
 
   {% endfor %}
 
+  {% if cloud_init__galaxy_packages is defined %}
   - path: /opt/galaxy-requirements.yml
     content: |
       ---
@@ -54,6 +55,7 @@ write_files:
       {% endfor %}
     permissions: "0644"
     owner: root
+  {% endif %} 
 
   - path: /opt/ansible.cfg
     content: |
@@ -76,7 +78,9 @@ runcmd:
   {# And note that fubarhouse.golang runs `go get` before it configures any shell integration, #}
   {# so using shell integration would not help. #}
   {# See https://github.com/fubarhouse/ansible-role-golang/blob/master/tasks/main.yml#L19-L35 #}
+  {% if cloud_init__galaxy_packages is defined %}
   - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-galaxy install -vvv -r /opt/galaxy-requirements.yml
+  {% endif %}
   - ANSIBLE_CONFIG=/opt/ansible.cfg /usr/bin/ansible-pull --url https://{{ machineuser_oauth_token_github }}:x-oauth-basic@github.com/{{ cloud_init__ansible_repo_remote }} -d {{ cloud_init__ansible_repo_local }} --accept-host-key local.yml
   - systemctl daemon-reload
   {% for image in containers_images %}
