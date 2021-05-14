@@ -14,7 +14,8 @@
 
   tasks:
     - name: download docker-credential-gcr
-      ansible.builtin.shell: >
-        curl -fsSL {{ docker_credential_gcr__uri }} \
-        | tar xz --to-stdout ./docker-credential-gcr \
-        > /usr/bin/docker-credential-gcr && chmod +x /usr/bin/docker-credential-gcr
+      ansible.builtin.shell:
+        cmd: >
+          curl -fsSL {{ docker_credential_gcr__uri }} \
+          | tar xz --to-stdout ./docker-credential-gcr \
+          > /usr/bin/docker-credential-gcr && chmod +x /usr/bin/docker-credential-gcr
