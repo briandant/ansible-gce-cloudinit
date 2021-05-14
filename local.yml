@@ -9,9 +9,6 @@
     - "ansible_vars/base.yml"
     - "ansible_vars/{{ env }}.yml"
 
-  roles:
-    - fubarhouse.golang
-
   tasks:
     - name: download docker-credential-gcr
       ansible.builtin.shell:
