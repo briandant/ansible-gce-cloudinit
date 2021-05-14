@@ -1,4 +1,4 @@
-[all:vars]
+[local:vars]
 env=production
 
 [local]
